@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Product — Waveform</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body data-page="product">
+
+  <nav class="nav">
+    <a href="index.html" class="nav__logo">Waveform</a>
+    <div class="nav__links">
+      <a href="index.html" class="nav__link">Home</a>
+      <a href="products.html" class="nav__link active">Shop</a>
+      <a href="wishlist.html" class="nav__link nav__icon-link">Wishlist <span id="wishBadge" class="nav__badge" hidden>0</span></a>
+      <a href="cart.html" class="nav__link nav__icon-link">Cart <span id="cartBadge" class="nav__badge" hidden>0</span></a>
+    </div>
+  </nav>
+
+  <div class="detail" id="detailWrap"></div>
+
+  <section class="section" hidden>
+    <div class="section__head">
+      <h2 class="section__title">Recently viewed</h2>
+    </div>
+    <div class="grid" id="recentlyViewedGrid"></div>
+  </section>
+
+  <footer class="footer">
+    Waveform — a student project built for learning. Not a real store.
+  </footer>
+
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
