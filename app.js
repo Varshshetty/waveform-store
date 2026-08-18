@@ -1,5 +1,3 @@
-
-
 const CART_KEY = "fernwood-cart"; // [{ id, qty }]
 const WISHLIST_KEY = "fernwood-wishlist"; // [id, id, ...]
 const RECENTLY_VIEWED_KEY = "fernwood-recently-viewed"; // [id, id, ...] most recent first
@@ -120,6 +118,13 @@ function formatPrice(value) {
   return `\u20b9${value.toLocaleString("en-IN")}`;
 }
 
+function truncateText(text, maxLength = 70) {
+  if (!text) return "";
+  const trimmed = text.trim();
+  if (trimmed.length <= maxLength) return trimmed;
+  return trimmed.slice(0, maxLength).trim() + "…";
+}
+
 function getQueryParam(name) {
   return new URLSearchParams(window.location.search).get(name);
 }
@@ -165,6 +170,7 @@ function productCardHTML(product) {
       <div class="card__body">
         <span class="card__category">${product.category}</span>
         <a href="product.html?id=${product.id}"><h3 class="card__name">${product.name}</h3></a>
+        ${product.description ? `<p class="card__notes">${truncateText(product.description, 70)}</p>` : ""}
         <span class="card__price">${formatPrice(product.price)}</span>
         <button class="card__add" data-add="${product.id}">Add to cart</button>
       </div>
