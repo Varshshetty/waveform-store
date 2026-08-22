@@ -1,6 +1,10 @@
 // ---------- Product catalog ----------
 // Images use picsum.photos with a fixed seed so each product gets a
 // consistent (but placeholder) photo. Swap these for real photos later.
+//
+// Optional field: `salePrice` — when present and lower than `price`,
+// product cards and the detail page show a discount badge and a
+// strikethrough original price.
 
 const PRODUCTS = [
   {
@@ -8,6 +12,7 @@ const PRODUCTS = [
     name: "Aria Wireless Headphones",
     category: "Headphones",
     price: 4999,
+    salePrice: 3999,
     image: "https://picsum.photos/seed/ariaheadphones/600/600",
     description:
       "Over-ear wireless headphones with active noise cancellation and 30 hours of battery life. Foldable design with a travel case included.",
@@ -52,6 +57,7 @@ const PRODUCTS = [
     name: "Orbit Bluetooth Speaker",
     category: "Speakers",
     price: 3299,
+    salePrice: 2799,
     image: "https://picsum.photos/seed/orbitspeaker/600/600",
     description:
       "A compact, waterproof speaker with 360-degree sound and 12 hours of battery — small enough to clip to a bag.",
@@ -96,6 +102,7 @@ const PRODUCTS = [
     name: "Pulse Fit Smartwatch",
     category: "Wearables",
     price: 6499,
+    salePrice: 5499,
     image: "https://picsum.photos/seed/pulsefitwatch/600/600",
     description:
       "A fitness-focused smartwatch with heart rate tracking, sleep monitoring, and a 10-day battery life.",
@@ -140,6 +147,7 @@ const PRODUCTS = [
     name: "45W GaN Wall Charger",
     category: "Accessories",
     price: 1799,
+    salePrice: 1399,
     image: "https://picsum.photos/seed/ganwallcharger/600/600",
     description:
       "A compact dual-port fast charger using GaN technology, small enough to carry in any bag.",

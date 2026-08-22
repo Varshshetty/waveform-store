@@ -135,6 +135,28 @@ function heartIcon() {
   </svg>`;
 }
 
+// ---------- Discount helpers ----------
+
+function isOnSale(product) {
+  return typeof product.salePrice === "number" && product.salePrice < product.price;
+}
+
+function discountPercent(product) {
+  return Math.round(((product.price - product.salePrice) / product.price) * 100);
+}
+
+function priceHTML(product) {
+  if (isOnSale(product)) {
+    return `
+      <span class="card__price-row">
+        <span class="card__price card__price--sale">${formatPrice(product.salePrice)}</span>
+        <span class="card__price-original">${formatPrice(product.price)}</span>
+      </span>
+    `;
+  }
+  return `<span class="card__price">${formatPrice(product.price)}</span>`;
+}
+
 // ---------- Nav badges (runs on every page) ----------
 
 function updateNavBadges() {
@@ -158,10 +180,11 @@ function updateNavBadges() {
 
 function productCardHTML(product) {
   const wished = isWishlisted(product.id);
+  const onSale = isOnSale(product);
   return `
     <div class="card" data-id="${product.id}">
       <a href="product.html?id=${product.id}" class="card__image-wrap">
-        ${product.tag ? `<span class="card__tag">${product.tag}</span>` : ""}
+        ${onSale ? `<span class="card__tag card__tag--sale">-${discountPercent(product)}%</span>` : product.tag ? `<span class="card__tag">${product.tag}</span>` : ""}
         <img src="${product.image}" alt="${product.name}" loading="lazy" />
       </a>
       <button class="card__wish ${wished ? "active" : ""}" data-wish="${product.id}" aria-label="Toggle wishlist">
@@ -171,7 +194,7 @@ function productCardHTML(product) {
         <span class="card__category">${product.category}</span>
         <a href="product.html?id=${product.id}"><h3 class="card__name">${product.name}</h3></a>
         ${product.description ? `<p class="card__notes">${truncateText(product.description, 70)}</p>` : ""}
-        <span class="card__price">${formatPrice(product.price)}</span>
+        ${priceHTML(product)}
         <button class="card__add" data-add="${product.id}">Add to cart</button>
       </div>
     </div>
@@ -240,8 +263,12 @@ function renderProducts() {
       return matchesCategory && matchesQuery;
     });
 
-    if (sortBy === "price-asc") results.sort((a, b) => a.price - b.price);
-    if (sortBy === "price-desc") results.sort((a, b) => b.price - a.price);
+    function effectivePrice(p) {
+      return isOnSale(p) ? p.salePrice : p.price;
+    }
+
+    if (sortBy === "price-asc") results.sort((a, b) => effectivePrice(a) - effectivePrice(b));
+    if (sortBy === "price-desc") results.sort((a, b) => effectivePrice(b) - effectivePrice(a));
     if (sortBy === "name-asc") results.sort((a, b) => a.name.localeCompare(b.name));
 
     grid.innerHTML = results.map(productCardHTML).join("");
@@ -280,12 +307,23 @@ function renderProductDetail() {
 
   function draw() {
     const wished = isWishlisted(product.id);
+    const onSale = isOnSale(product);
     wrap.innerHTML = `
-      <div class="detail__image"><img src="${product.image}" alt="${product.name}" /></div>
+      <div class="detail__image">
+        ${onSale ? `<span class="card__tag card__tag--sale detail__sale-tag">-${discountPercent(product)}%</span>` : ""}
+        <img src="${product.image}" alt="${product.name}" />
+      </div>
       <div class="detail__info">
         <span class="detail__category">${product.category}</span>
         <h1 class="detail__name">${product.name}</h1>
-        <span class="detail__price">${formatPrice(product.price)}</span>
+        ${
+          onSale
+            ? `<span class="detail__price-row">
+                 <span class="detail__price detail__price--sale">${formatPrice(product.salePrice)}</span>
+                 <span class="detail__price-original">${formatPrice(product.price)}</span>
+               </span>`
+            : `<span class="detail__price">${formatPrice(product.price)}</span>`
+        }
         <p class="detail__desc">${product.description}</p>
         <span class="detail__stock">${product.stock} in stock</span>
         <div class="detail__actions">
@@ -345,8 +383,9 @@ function renderCart() {
     document.getElementById("cartSummary").hidden = false;
 
     container.innerHTML = items
-      .map(
-        (item) => `
+      .map((item) => {
+        const unitPrice = isOnSale(item.product) ? item.product.salePrice : item.product.price;
+        return `
       <div class="line-item" data-id="${item.id}">
         <div class="line-item__image"><img src="${item.product.image}" alt="${item.product.name}" /></div>
         <div>
@@ -358,14 +397,17 @@ function renderCart() {
           <span>${item.qty}</span>
           <button data-plus="${item.id}" aria-label="Increase quantity">+</button>
         </div>
-        <span>${formatPrice(item.product.price * item.qty)}</span>
+        <span>${formatPrice(unitPrice * item.qty)}</span>
         <button class="line-item__remove" data-remove="${item.id}" aria-label="Remove item">\u2715</button>
       </div>
-    `
-      )
+    `;
+      })
       .join("");
 
-    const subtotal = items.reduce((sum, i) => sum + i.product.price * i.qty, 0);
+    const subtotal = items.reduce((sum, i) => {
+      const unitPrice = isOnSale(i.product) ? i.product.salePrice : i.product.price;
+      return sum + unitPrice * i.qty;
+    }, 0);
     const shipping = subtotal > 0 ? 60 : 0;
     const total = subtotal + shipping;
 
@@ -432,15 +474,19 @@ function renderCheckout() {
     return;
   }
 
-  const subtotal = items.reduce((sum, i) => sum + i.product.price * i.qty, 0);
+  const subtotal = items.reduce((sum, i) => {
+    const unitPrice = isOnSale(i.product) ? i.product.salePrice : i.product.price;
+    return sum + unitPrice * i.qty;
+  }, 0);
   const shipping = 60;
   const total = subtotal + shipping;
 
   summary.innerHTML =
     items
-      .map(
-        (i) => `<div class="order-summary-item"><span>${i.product.name} \u00d7 ${i.qty}</span><span>${formatPrice(i.product.price * i.qty)}</span></div>`
-      )
+      .map((i) => {
+        const unitPrice = isOnSale(i.product) ? i.product.salePrice : i.product.price;
+        return `<div class="order-summary-item"><span>${i.product.name} \u00d7 ${i.qty}</span><span>${formatPrice(unitPrice * i.qty)}</span></div>`;
+      })
       .join("") +
     `<div class="summary-row" style="margin-top:0.75rem;"><span>Subtotal</span><span>${formatPrice(subtotal)}</span></div>
      <div class="summary-row"><span>Shipping</span><span>${formatPrice(shipping)}</span></div>
