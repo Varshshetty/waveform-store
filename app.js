@@ -461,6 +461,80 @@ function renderWishlist() {
   });
 }
 
+// ---------- Checkout validation ----------
+
+function validateCheckoutForm(fields) {
+  const errors = {};
+
+  if (!fields.fullName.value.trim()) {
+    errors.fullName = "Full name is required.";
+  } else if (fields.fullName.value.trim().length < 2) {
+    errors.fullName = "Enter your full name.";
+  }
+
+  if (!fields.address.value.trim()) {
+    errors.address = "Address is required.";
+  }
+
+  if (!fields.city.value.trim()) {
+    errors.city = "City is required.";
+  }
+
+  const pincode = fields.pincode.value.trim();
+  if (!pincode) {
+    errors.pincode = "Pincode is required.";
+  } else if (!/^\d{6}$/.test(pincode)) {
+    errors.pincode = "Enter a valid 6-digit pincode.";
+  }
+
+  const cardDigits = fields.cardNumber.value.replace(/\s+/g, "");
+  if (!cardDigits) {
+    errors.cardNumber = "Card number is required.";
+  } else if (!/^\d{16}$/.test(cardDigits)) {
+    errors.cardNumber = "Enter a valid 16-digit card number.";
+  }
+
+  const expiry = fields.expiry.value.trim();
+  if (!expiry) {
+    errors.expiry = "Expiry is required.";
+  } else if (!/^(0[1-9]|1[0-2])\/\d{2}$/.test(expiry)) {
+    errors.expiry = "Use MM/YY format.";
+  } else {
+    const [mm, yy] = expiry.split("/").map(Number);
+    const now = new Date();
+    const currentYear = now.getFullYear() % 100;
+    const currentMonth = now.getMonth() + 1;
+    if (yy < currentYear || (yy === currentYear && mm < currentMonth)) {
+      errors.expiry = "Card has expired.";
+    }
+  }
+
+  const cvv = fields.cvv.value.trim();
+  if (!cvv) {
+    errors.cvv = "CVV is required.";
+  } else if (!/^\d{3,4}$/.test(cvv)) {
+    errors.cvv = "Enter a valid CVV.";
+  }
+
+  return errors;
+}
+
+function clearCheckoutErrors(fields) {
+  Object.keys(fields).forEach((key) => {
+    const errorEl = document.getElementById(`${key}Error`);
+    if (errorEl) errorEl.textContent = "";
+    fields[key].classList.remove("input-error");
+  });
+}
+
+function showCheckoutErrors(fields, errors) {
+  Object.entries(errors).forEach(([key, message]) => {
+    const errorEl = document.getElementById(`${key}Error`);
+    if (errorEl) errorEl.textContent = message;
+    if (fields[key]) fields[key].classList.add("input-error");
+  });
+}
+
 function renderCheckout() {
   const summary = document.getElementById("checkoutSummary");
   const form = document.getElementById("checkoutForm");
@@ -492,8 +566,38 @@ function renderCheckout() {
      <div class="summary-row"><span>Shipping</span><span>${formatPrice(shipping)}</span></div>
      <div class="summary-row summary-row--total"><span>Total</span><span>${formatPrice(total)}</span></div>`;
 
+  const fields = {
+    fullName: document.getElementById("fullName"),
+    address: document.getElementById("address"),
+    city: document.getElementById("city"),
+    pincode: document.getElementById("pincode"),
+    cardNumber: document.getElementById("cardNumber"),
+    expiry: document.getElementById("expiry"),
+    cvv: document.getElementById("cvv"),
+  };
+
+  // Clear a field's error the moment the user starts fixing it
+  Object.entries(fields).forEach(([key, el]) => {
+    el.addEventListener("input", () => {
+      const errorEl = document.getElementById(`${key}Error`);
+      if (errorEl) errorEl.textContent = "";
+      el.classList.remove("input-error");
+    });
+  });
+
   form.addEventListener("submit", (e) => {
     e.preventDefault();
+
+    const errors = validateCheckoutForm(fields);
+    clearCheckoutErrors(fields);
+
+    if (Object.keys(errors).length > 0) {
+      showCheckoutErrors(fields, errors);
+      const firstErrorKey = Object.keys(errors)[0];
+      fields[firstErrorKey].focus();
+      return;
+    }
+
     saveCart([]); // clear cart — order "placed"
     document.getElementById("checkoutLayout").hidden = true;
     document.getElementById("confirmation").hidden = false;
